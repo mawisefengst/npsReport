@@ -21,20 +21,52 @@ export class AppComponent{
   filteredData :any;
   currentClient: any;
   currentClientData: any;
+  currentNPSDataByDate: any;
+  currentWeekAverage: any;
+  currentMonthAverage : any;
 
   constructor(private appservice : AppServiceService,private elementRef:ElementRef){
     this.frequence = "week";
     this.startDate = "09/16/2017";
     var today = new Date();
+    this.currentClientData =[];
     this.endDate = (today.getMonth() + 1) + "/" + today.getDate()+ "/" + today.getFullYear();
   	this.appservice.getUrl().subscribe(data=>{
   		 this.npsData = data;
+       var rawData = this.npsData.rawData;
+       var filterdDataWeek = rawData.filter((data) =>{
+           return new Date(data.insertDT).getTime() >= this.getlastMonday().getTime() && new Date(data.insertDT).getTime() <= this.getNextDay("week",this.getlastMonday()).getTime()
+       });
+       var copiedDate = new Date();
+       var firstDayMonth = new Date(copiedDate.getFullYear(), copiedDate.getMonth(), 1);
+       var filteredDataMonth = rawData.filter((data) =>{
+           return new Date(data.insertDT).getTime() >= firstDayMonth.getTime() && new Date(data.insertDT).getTime() <= this.getNextDay("month",firstDayMonth).getTime()
+       });
+       this.currentWeekAverage = this.getAverage(filterdDataWeek);
+       this.currentMonthAverage = this.getAverage(filteredDataMonth);
        this.initLineChart(this.npsData[this.frequence +"lyData"], this.frequence);
   	})
 
     this.appservice.getAllClients().subscribe(data => {
       this.allClients = data;
     });
+  }
+
+  getlastMonday(){
+      var copiedDate = new Date();
+      var day = copiedDate.getDay();
+      var diffDate = copiedDate.getDate() + 1 - 7 - copiedDate.getDay() % 7;
+      let lastMonday = new Date(copiedDate.setDate(diffDate));
+      return lastMonday;
+  }
+  
+  getAverage(groupScore){
+      var totolVal = 0;
+      groupScore.forEach((d) => {
+        totolVal += d.score;
+      });
+      var averageVal = (totolVal / groupScore.length).toFixed(2);
+      return averageVal;
   }
 
   ngOnInit() {
@@ -65,31 +97,33 @@ export class AppComponent{
     this.filterData();
   }
 
-  changeClient(client){
-
-    function formatDate(date) {
-      var day = date.getDate();
-      var monthIndex = date.getMonth() + 1;
-      var year = date.getFullYear();
-      var hour = date.getHours();
-      var minute = date.getMinutes();
-      var amPM = (hour > 11) ? "pm" : "am";
-      if(hour > 12) {
-        hour -= 12;
-      } else if(hour == 0) {
-        hour = "12";
-      }
-      if(minute < 10) {
-        minute = "0" + minute;
-      }
-      return monthIndex  + "/" +  day + '/' + year + " " + hour + ":" + minute + amPM;
+  formatDate(date) {
+    var day = date.getDate();
+    var monthIndex = date.getMonth() + 1;
+    var year = date.getFullYear();
+    var hour = date.getHours();
+    var minute = date.getMinutes();
+    var amPM = (hour > 11) ? "pm" : "am";
+    if(hour > 12) {
+      hour -= 12;
+    } else if(hour == 0) {
+      hour = "12";
     }
+    if(minute < 10) {
+      minute = "0" + minute;
+    }
+    return monthIndex  + "/" +  day + '/' + year + " " + hour + ":" + minute + amPM;
+  }
 
+  changeClient(){
+    let client = this.currentClient;
     var rawData = this.npsData.rawData;
     this.currentClientData = rawData.filter((data) =>{
-       data.insertDTShow = formatDate(new Date(data.insertDT));
+       data.insertDTShow = this.formatDate(new Date(data.insertDT));
        return data.clientName ==  client;
     });
+    this.currentNPSDataByDate.length = 0;
+
 
     function compare(a,b) {
       if (new Date(a.insertDT).valueOf() < new Date(b.insertDT).valueOf())
@@ -235,16 +269,58 @@ export class AppComponent{
         var datePoints = this.svg.selectAll(".line-chart__date-point");
         datePoints = datePoints.data(lineData);
         datePoints.exit().remove();
-        datePoints.enter().append("circle").attr("class", "line-chart__date-point").attr("r", 3);
+        datePoints.enter().append("circle").attr("class", "line-chart__date-point");
         datePoints.attr("cx", function(d) {
             return xRange(new Date(d.x))
         }).attr("cy", function(d) {
             return  yRange(d.y)  - MARGINS.bottom
-        }).attr("r", 4.5)
+        }).attr("r", 7)
         .attr("fill", "rgb(255,255,255)")
         .attr("opacity", 1)
         .attr("stroke", "rgb(214, 56, 104)")
-        .attr("stroke-width", "1px)");
+        .attr("stroke-width", "2px)")
+        .on('click', (d,event) => {
+          this.filterDataByDate(d.x);
+        });
+
+  }
+
+
+  getNextDay(frequence,d) {
+      var copiedDate = new Date(d.getTime());
+      if(frequence == "week"){
+        var day = d.getDay();
+        var diffDate = d.getDate() + 1 + 7 - d.getDay() % 7;
+        let diff = new Date(copiedDate.setDate(diffDate));
+        return diff;
+      }else if(frequence == "month"){
+        let diff = new Date(copiedDate.getFullYear(), copiedDate.getMonth() + 1, 1);
+        return diff;
+      }else{
+        let diff = new Date(copiedDate.getFullYear(), (Math.floor(copiedDate.getMonth()/3)+1) * 3, 1);
+        console.log(diff);
+        return diff;
+      }
+   }
+
+  filterDataByDate(x){
+
+     let currentDate = x;
+     
+
+     var rawData = this.npsData.rawData;
+     this.currentNPSDataByDate = rawData.filter((data) =>{
+         data.insertDTShow = this.formatDate(new Date(data.insertDT));
+         //return new Date(data.insertDT).getTime() >= new Date(this.startDate).getTime() 
+         //&& new Date(data.insertDT).getTime() <= new Date(this.endDate).getTime()
+        // console.log(new Date(data.insertDT).getTime()); 
+         return new Date(data.insertDT).getTime() >= currentDate.getTime() &&  new Date(data.insertDT).getTime() <= this.getNextDay(this.frequence,currentDate).getTime();
+     });
+     this.currentClient = "";
+     this.currentClientData.length = 0;
+
+     //var filtedData = this.groupByTime(validatedData,"insertDT", this.frequence);
+     //this.initLineChart(filtedData, this.frequence);
 
   }
 

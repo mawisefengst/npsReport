@@ -12,21 +12,22 @@
             <div class="row">
 
              <div class="columns large-12 medium-12 small-12">
-                <h4 class="title">SNAPSHOT</h4>
+                <h4 class="title">NPS SNAPSHOT</h4>
                 <div class="metric">              
-                    <h4 class="value nps">9.20</h4>
-                    <h2 class="description">Week Average</h2>
+                    <h4 class="value nps">{{currentWeekAverage}}</h4>
+                    <h2 class="description">Current Week Average</h2>
                     <div class="separator"></div>
                 </div>
                 <div class="metric">              
-                    <h4 class="value nps">9.20</h4>
-                    <h2 class="description">Month Average</h2>
+                    <h4 class="value nps">{{currentMonthAverage}}</h4>
+                    <h2 class="description">Current Month Average</h2>
                     <div class="separator"></div>
                 </div>
              </div>  
 
                <div class="columns large-6 medium-6 small-12 end">
                   <h4 class="title">Trends:</h4> 
+                  <div class="timeStamp">Mouseover circles in line graph to see average and Click circles to view details</div>
                   <div id="svgWrapper" (mousemove)="mMove($event)" (mouseleave)="mMoveLeave($event)"></div>
               </div>  
 
@@ -51,28 +52,15 @@
 
               </div>
 
-            
-            </div>
-
-             <div class="row">
-                <div class="columns large-4 medium-6 small-12 ">
-                    <h4 class="title">Feedback:</h4>
-                    Select dropdown below to start:
-                    <select #currentClient (change)="changeClient(currentClient.value)">
-                      <option value="">Select client</option>
-                      <option *ngFor="let client of allClients" attr.val="{{client.clientName}}">{{client.clientName}}</option>
-                  </select>
-                </div>
-
-                <div class="columns large-12 medium-12 small-12 relativePostion end" *ngFor="let clientData of currentClientData">
+              <div class="columns large-12 medium-12 small-12 relativePostion end" *ngFor="let clientData of currentNPSDataByDate">
 
                     <div class="border{{clientData.score}}"></div>
 
                     <div class="row">
-                       <h2 class="grade promoter score-{{clientData.score}} columns large-1 medium-2 small-2">{{clientData.score}}</h2>
+                       <h2 class="grade promoter score-{{clientData.score}} columns large-1 medium-1 small-2">{{clientData.score}}</h2>
                        <span class="mail has-end-users columns large-4 medium-4 small-6 lineHeight">Client: {{clientData.clientName}}</span>
                         <span class="mail has-end-users columns large-4 medium-4 small-6 lineHeight">UserName: {{clientData.userName}}</span>
-                        <div class="lineHeight timeStamp columns large-3 medium-4 small-4 end">{{clientData.insertDTShow}}</div>
+                        <div class="lineHeight timeStamp columns large-3 medium-3 small-4 end">{{clientData.insertDTShow}}</div>
                     </div>
 
                      <div class="content">
@@ -83,6 +71,37 @@
                       </div>
 
                 </div>
+
+            
+            </div>
+
+             <div class="row">
+                <div class="columns large-4 medium-6 small-12 paddingTop">
+                    <h4 class="title">Client Details:</h4>
+                    Select dropdown below to start:
+                    <select [(ngModel)]="currentClient" (change)="changeClient()">
+                      <option value="">Select client</option>
+                      <option *ngFor="let client of allClients" attr.val="{{client.clientName}}">{{client.clientName}}</option>
+                  </select>
+                </div>
+
+                  <div class="columns large-12 medium-12 small-12 relativePostion end" *ngFor="let clientData of currentClientData">
+                      <div class="border{{clientData.score}}"></div>
+
+                      <div class="row">
+                         <h2 class="grade promoter score-{{clientData.score}} columns large-1 medium-1 small-2">{{clientData.score}}</h2>
+                         <span class="mail has-end-users columns large-4 medium-4 small-6 lineHeight">Client: {{clientData.clientName}}</span>
+                          <span class="mail has-end-users columns large-4 medium-4 small-6 lineHeight">UserName: {{clientData.userName}}</span>
+                          <div class="lineHeight timeStamp columns large-3 medium-3 small-4 end">{{clientData.insertDTShow}}</div>
+                      </div>
+
+                       <div class="content">
+                            <div class="end-user-comment">
+                            <pre class="comment-format">Event:{{clientData.eventName}}({{clientData.eventID}})</pre>
+                            <pre class="comment-format" *ngIf="clientData.feedback">Feedback: {{clientData.feedback}}</pre>
+                            </div>
+                        </div>
+                  </div>
 
              </div>
 
