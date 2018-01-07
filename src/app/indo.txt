@@ -1,0 +1,19 @@
+
+
+
+
+
+
+
+
+
+
+I'd like to see an average score by different periods of time - so maybe a way to select a date range. As Brian suggested, a way to select a date range and see the average over that period.
+
+Then I'd like to be able to drill down by client - so I could see the ratings from all users at X client.
+
+Current monthly average (average score over the past 31 days)
+
+A line graph that shows  monthly averages connected by lines so that we can see any trend that develops.
+
+
